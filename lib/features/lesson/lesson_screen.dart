@@ -94,6 +94,19 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Future<void> _handleAction(AppState state) async {
+    final step = state.currentStep;
+    if (step?.type == 'word_intro' && state.lastResult == null) {
+      setState(() => checking = true);
+      await state.submitCurrentStep({'selected_option_id': 'intro-ready'});
+      state.nextStep();
+      if (!mounted) return;
+      setState(() {
+        response = null;
+        checking = false;
+      });
+      return;
+    }
+
     if (state.lastResult == null) {
       if (response == null) return;
       setState(() => checking = true);
@@ -205,6 +218,7 @@ class _BottomTray extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final correct = result?.correct == true;
+    final isIntro = step.type == 'word_intro';
     final color = result == null
         ? AppTheme.green
         : correct
@@ -266,13 +280,15 @@ class _BottomTray extends StatelessWidget {
             label: result == null
                 ? checking
                       ? 'CHECKING…'
+                      : isIntro
+                      ? 'CONTINUE'
                       : 'CHECK'
                 : isLast
                 ? 'FINISH'
                 : 'CONTINUE',
             color: color,
             shadow: shadow,
-            enabled: result != null || enabled,
+            enabled: result != null || enabled || isIntro,
             onTap: onPressed,
           ),
         ],

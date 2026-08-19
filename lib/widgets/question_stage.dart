@@ -64,6 +64,15 @@ class _QuestionStageState extends State<QuestionStage> {
   @override
   Widget build(BuildContext context) {
     final step = widget.step;
+    final body = switch (step.type) {
+      'word_intro' => _buildWordIntro(),
+      'order_words' => _buildOrder(),
+      'cloze' || 'dictation' || 'write_sentence' => _buildWriting(),
+      'speak' => _buildSpeaking(),
+      'component_tree' => _buildComponentTree(),
+      _ => _buildChoice(),
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -71,19 +80,10 @@ class _QuestionStageState extends State<QuestionStage> {
           step.prompt,
           style: Theme.of(
             context,
-          ).textTheme.headlineMedium?.copyWith(fontSize: 25),
+          ).textTheme.headlineMedium?.copyWith(fontSize: 24),
         ),
-        const SizedBox(height: 18),
-        Expanded(
-          child: switch (step.type) {
-            'word_intro' => _buildWordIntro(),
-            'order_words' => _buildOrder(),
-            'cloze' || 'dictation' || 'write_sentence' => _buildWriting(),
-            'speak' => _buildSpeaking(),
-            'component_tree' => _buildComponentTree(),
-            _ => _buildChoice(),
-          },
-        ),
+        const SizedBox(height: 14),
+        Expanded(child: body),
       ],
     );
   }
@@ -100,64 +100,64 @@ class _QuestionStageState extends State<QuestionStage> {
       ('MEANING', metadata['meaning'] as String? ?? ''),
       ('WORD TYPE', metadata['word_type'] as String? ?? ''),
       ('COMPONENTS', metadata['components_label'] as String? ?? ''),
-    ];
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              character,
-              style: const TextStyle(fontSize: 62, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  jyutping,
-                  style: const TextStyle(
-                    color: AppTheme.blue,
-                    fontSize: 25,
-                    fontWeight: FontWeight.w900,
-                  ),
+    ].where((fact) => fact.$2.trim().isNotEmpty).toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 12,
+            children: [
+              Text(
+                character,
+                style: const TextStyle(
+                  fontSize: 56,
+                  fontWeight: FontWeight.w900,
                 ),
-                Text(
-                  metadata['meaning'] as String? ?? '',
-                  style: const TextStyle(
-                    color: AppTheme.muted,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 20),
-            _AudioOrb(
-              onTap: widget.disabled
-                  ? null
-                  : () => AudioService.instance.play(
-                      widget.step.audio?['url'] as String?,
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    jyutping,
+                    style: const TextStyle(
+                      color: AppTheme.blue,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
                     ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Expanded(
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 3.6,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: facts.length,
-            itemBuilder: (context, index) {
-              final fact = facts[index];
-              return Container(
+                  ),
+                  if ((metadata['meaning'] as String? ?? '').isNotEmpty)
+                    Text(
+                      metadata['meaning'] as String? ?? '',
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                ],
+              ),
+              _AudioOrb(
+                onTap: widget.disabled
+                    ? null
+                    : () => AudioService.instance.play(
+                        widget.step.audio?['url'] as String?,
+                      ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ...facts.map(
+            (fact) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
+                  horizontal: 14,
+                  vertical: 10,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -165,7 +165,6 @@ class _QuestionStageState extends State<QuestionStage> {
                   border: Border.all(color: AppTheme.border, width: 2),
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -173,35 +172,25 @@ class _QuestionStageState extends State<QuestionStage> {
                       style: const TextStyle(
                         color: AppTheme.muted,
                         fontWeight: FontWeight.w900,
-                        fontSize: 9,
+                        fontSize: 10,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       fact.$2,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: AppTheme.ink,
                         fontWeight: FontWeight.w900,
-                        fontSize: 13,
+                        fontSize: 15,
                       ),
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            ),
           ),
-        ),
-        _AnswerTile(
-          label: 'I KNOW THIS WORD NOW',
-          selected: selected == 'intro-ready',
-          disabled: widget.disabled,
-          onTap: () {
-            setState(() => selected = 'intro-ready');
-            widget.onResponseChanged({'selected_option_id': 'intro-ready'});
-          },
-        ),
-      ],
+        ],
+      ),
     );
   }
 
