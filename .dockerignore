@@ -1,0 +1,9 @@
+.dart_tool
+.git
+.idea
+.vscode
+build
+coverage
+android/.gradle
+ios/Pods
+macos/Pods
