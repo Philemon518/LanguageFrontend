@@ -2,10 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppConfig {
-  static const apiBaseUrl = String.fromEnvironment(
+  static const _rawApiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://127.0.0.1:8000',
   );
+
+  /// Ensures Railway build vars like `my-api.up.railway.app` become absolute URLs.
+  static String get apiBaseUrl => normalizeBaseUrl(_rawApiBaseUrl);
+
+  static String normalizeBaseUrl(String value) {
+    var url = value.trim();
+    if (url.isEmpty) {
+      return 'http://127.0.0.1:8000';
+    }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+    while (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+    return url;
+  }
 }
 
 class AppTheme {
