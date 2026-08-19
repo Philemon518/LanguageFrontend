@@ -14,4 +14,26 @@ envsubst '${BACKEND_URL} ${BACKEND_HOST}' \
   < /etc/nginx/templates/default.conf.template \
   > /etc/nginx/conf.d/default.conf
 
+BUILD_ID="${RAILWAY_DEPLOYMENT_ID:-$(date +%s)}"
+WEB_ROOT=/usr/share/nginx/html
+
+for asset in flutter_bootstrap.js index.html; do
+  if [ -f "$WEB_ROOT/$asset" ]; then
+    sed -i "s|main.dart.js|main.dart.js?v=${BUILD_ID}|g" "$WEB_ROOT/$asset"
+  fi
+done
+
+printf 'window.CANTO_API_BASE="/api";\n' > "$WEB_ROOT/config.js"
+
+if ! grep -q 'config.js' "$WEB_ROOT/index.html"; then
+  awk '
+    /flutter_bootstrap.js/ && !done {
+      print "  <script src=\"config.js\"></script>"
+      done = 1
+    }
+    { print }
+  ' "$WEB_ROOT/index.html" > "$WEB_ROOT/index.html.tmp"
+  mv "$WEB_ROOT/index.html.tmp" "$WEB_ROOT/index.html"
+fi
+
 exec "$@"

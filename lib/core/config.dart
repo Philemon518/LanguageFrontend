@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'api_base_stub.dart' if (dart.library.js_interop) 'api_base_web.dart' as api_base;
+
 class AppConfig {
   static const _rawApiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -10,11 +12,20 @@ class AppConfig {
 
   /// Local dev talks to the backend directly; deployed web uses same-origin `/api`.
   static String get apiBaseUrl {
-    final normalized = normalizeBaseUrl(_rawApiBaseUrl);
-    if (kIsWeb && !_isLocalBackend(normalized)) {
-      return '/api';
+    if (kIsWeb) {
+      final runtime = api_base.readRuntimeApiBase();
+      if (runtime != null && runtime.isNotEmpty) {
+        return normalizeBaseUrl(runtime);
+      }
+
+      final normalized = normalizeBaseUrl(_rawApiBaseUrl);
+      if (!_isLocalBackend(normalized)) {
+        return '/api';
+      }
+      return normalized;
     }
-    return normalized;
+
+    return normalizeBaseUrl(_rawApiBaseUrl);
   }
 
   static bool _isLocalBackend(String url) {
