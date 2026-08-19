@@ -18,6 +18,7 @@ class AppState extends ChangeNotifier {
   LessonDocument? currentLesson;
   ProgressData? progress;
   List<SkillProgress> skills = [];
+  List<LibraryWord> libraryWords = [];
   int currentStepIndex = 0;
   AttemptResult? lastResult;
   int sessionCorrect = 0;
@@ -113,6 +114,7 @@ class AppState extends ChangeNotifier {
     currentLesson = null;
     progress = null;
     skills = [];
+    libraryWords = [];
     currentStepIndex = 0;
     lastResult = null;
     sessionCorrect = 0;
@@ -130,6 +132,7 @@ class AppState extends ChangeNotifier {
       try {
         progress = await _api.fetchProgress();
         skills = await _api.fetchSkills();
+        libraryWords = await _api.fetchLibrary();
       } catch (_) {
         // Keep the road usable if progress is temporarily unavailable.
       }
@@ -190,6 +193,7 @@ class AppState extends ChangeNotifier {
         if (lastResult!.skillPointAwarded) {
           skills = await _api.fetchSkills();
         }
+        refreshLibrary();
       } else if (!sessionMistakes.contains(step.id)) {
         sessionMistakes.add(step.id);
       }
@@ -200,6 +204,13 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  Future<void> refreshLibrary() async {
+    try {
+      libraryWords = await _api.fetchLibrary();
+      notifyListeners();
+    } catch (_) {}
   }
 
   void nextStep() {
@@ -241,6 +252,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> finishLesson() async {
     await loadHome();
+    await refreshLibrary();
   }
 
   Future<String?> assessSpeech(

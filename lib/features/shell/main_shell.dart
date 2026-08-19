@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config.dart';
 import '../home/home_screen.dart';
+import '../library/library_screen.dart';
 import '../progress/progress_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -19,7 +20,11 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: IndexedStack(
         index: index,
-        children: const [HomeScreen(), ProgressScreen(embedded: true)],
+        children: const [
+          HomeScreen(),
+          LibraryScreen(embedded: true),
+          ProgressScreen(embedded: true),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
@@ -29,6 +34,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.route_outlined),
             selectedIcon: Icon(Icons.route_rounded, color: AppTheme.green),
             label: 'Learn',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book_rounded, color: AppTheme.purple),
+            label: 'Library',
           ),
           NavigationDestination(
             icon: Icon(Icons.insights_outlined),

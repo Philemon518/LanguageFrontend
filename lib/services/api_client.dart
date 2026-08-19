@@ -175,6 +175,25 @@ class ApiClient {
         .toList();
   }
 
+  Future<List<LibraryWord>> fetchLibrary() async {
+    final resp = await _client.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/library'),
+      headers: _headers,
+    );
+    if (resp.statusCode != 200) throw Exception('Failed to load library');
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    return (data['words'] as List)
+        .map((word) {
+          final entry = Map<String, dynamic>.from(word as Map<String, dynamic>);
+          final audioUrl = entry['audio_url'] as String?;
+          if (audioUrl != null && audioUrl.startsWith('/')) {
+            entry['audio_url'] = '${AppConfig.apiBaseUrl}$audioUrl';
+          }
+          return LibraryWord.fromJson(entry);
+        })
+        .toList();
+  }
+
   Future<ConversationSession> createConversation({
     required String scenarioId,
     List<String> targetVocab = const [],

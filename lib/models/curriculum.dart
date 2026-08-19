@@ -199,6 +199,63 @@ class SkillProgress {
   );
 }
 
+class LibraryWord {
+  final String lexemeId;
+  final String traditional;
+  final String jyutping;
+  final int tone;
+  final String english;
+  final String? wordType;
+  final String? components;
+  final String phase;
+  final String lessonId;
+  final String lessonTitle;
+  final String lessonType;
+  final String? encounteredAt;
+  final String? audioUrl;
+  final String? contextTraditional;
+  final String? contextJyutping;
+  final String? contextEnglish;
+
+  const LibraryWord({
+    required this.lexemeId,
+    required this.traditional,
+    required this.jyutping,
+    required this.tone,
+    required this.english,
+    required this.phase,
+    required this.lessonId,
+    required this.lessonTitle,
+    required this.lessonType,
+    this.wordType,
+    this.components,
+    this.encounteredAt,
+    this.audioUrl,
+    this.contextTraditional,
+    this.contextJyutping,
+    this.contextEnglish,
+  });
+
+  factory LibraryWord.fromJson(Map<String, dynamic> json) => LibraryWord(
+    lexemeId: json['lexeme_id'] as String,
+    traditional: json['traditional'] as String,
+    jyutping: json['jyutping'] as String,
+    tone: json['tone'] as int,
+    english: json['english'] as String,
+    wordType: json['word_type'] as String?,
+    components: json['components'] as String?,
+    phase: json['phase'] as String,
+    lessonId: json['lesson_id'] as String,
+    lessonTitle: json['lesson_title'] as String,
+    lessonType: json['lesson_type'] as String,
+    encounteredAt: json['encountered_at'] as String?,
+    audioUrl: json['audio_url'] as String?,
+    contextTraditional: json['context_traditional'] as String?,
+    contextJyutping: json['context_jyutping'] as String?,
+    contextEnglish: json['context_english'] as String?,
+  );
+}
+
 class ProgressData {
   final String level;
   final int streakDays;
