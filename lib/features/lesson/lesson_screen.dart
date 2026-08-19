@@ -54,8 +54,8 @@ class _LessonScreenState extends State<LessonScreen> {
               child: Column(
                 children: [
                   _LessonHeader(
-                    current: state.currentStepIndex,
-                    total: lesson.steps.length,
+                    current: state.sessionStepPosition - 1,
+                    total: state.sessionStepTotal,
                     onClose: () => context.pop(),
                   ),
                   Padding(

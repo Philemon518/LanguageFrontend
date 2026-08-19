@@ -42,6 +42,7 @@ class _QuestionStageState extends State<QuestionStage> {
   final recordedBytes = <int>[];
   bool recording = false;
   bool assessing = false;
+  bool manualInput = false;
   String? speechTranscript;
 
   @override
@@ -67,7 +68,8 @@ class _QuestionStageState extends State<QuestionStage> {
     final body = switch (step.type) {
       'word_intro' => _buildWordIntro(),
       'order_words' => _buildOrder(),
-      'cloze' || 'dictation' || 'write_sentence' => _buildWriting(),
+      'cloze' => _buildCloze(),
+      'dictation' || 'write_sentence' => _buildWriting(),
       'speak' => _buildSpeaking(),
       'component_tree' => _buildComponentTree(),
       _ => _buildChoice(),
@@ -256,6 +258,7 @@ class _QuestionStageState extends State<QuestionStage> {
                     onTap: widget.disabled
                         ? null
                         : () {
+                            _playOptionAudio(word);
                             setState(() => ordered.remove(word));
                             _notifyOrder();
                           },
@@ -276,6 +279,7 @@ class _QuestionStageState extends State<QuestionStage> {
                   onTap: widget.disabled
                       ? null
                       : () {
+                          _playOptionAudio(word);
                           setState(() => ordered.add(word));
                           _notifyOrder();
                         },
@@ -288,11 +292,103 @@ class _QuestionStageState extends State<QuestionStage> {
     );
   }
 
+  void _playOptionAudio(Map<String, dynamic> option) {
+    AudioService.instance.play((option['audio'] as Map?)?['url'] as String?);
+  }
+
   void _notifyOrder() {
     widget.onResponseChanged(
       ordered.isEmpty
           ? null
           : {'order': ordered.map((word) => word['id']).toList()},
+    );
+  }
+
+  Widget _buildCloze() {
+    final step = widget.step;
+    final visibleOptions = widget.disabled && selected != null
+        ? step.options.where((option) => option['id'] == selected)
+        : step.options;
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 8),
+      children: [
+        if (step.revealEnglish != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE4F6FE),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              step.revealEnglish!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppTheme.ink,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+        ],
+        if (!manualInput)
+          ...visibleOptions.map((option) {
+            final id = option['id'] as String;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 9),
+              child: _AnswerTile(
+                label: option['label'] as String,
+                selected: selected == id,
+                disabled: widget.disabled,
+                audioUrl: (option['audio'] as Map?)?['url'] as String?,
+                onTap: () {
+                  setState(() => selected = id);
+                  widget.onResponseChanged({'selected_option_id': id});
+                },
+              ),
+            );
+          })
+        else
+          TextField(
+            controller: textController,
+            enabled: !widget.disabled,
+            autofocus: true,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            decoration: InputDecoration(
+              hintText: 'Type the missing word',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: AppTheme.border,
+                  width: 2,
+                ),
+              ),
+            ),
+            onChanged: (value) {
+              final answer = value.trim();
+              widget.onResponseChanged(
+                answer.isEmpty ? null : {'answer': answer},
+              );
+            },
+          ),
+        if (step.metadata['allow_manual_input'] == true && !widget.disabled)
+          TextButton(
+            onPressed: () {
+              setState(() {
+                manualInput = !manualInput;
+                selected = null;
+                textController.clear();
+              });
+              widget.onResponseChanged(null);
+            },
+            child: Text(manualInput ? 'USE WORD CHOICES' : 'TYPE INSTEAD'),
+          ),
+      ],
     );
   }
 

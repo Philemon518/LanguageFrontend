@@ -112,6 +112,47 @@ void main() {
     expect(response, {'selected_option_id': 'a'});
   });
 
+  testWidgets('beginner cloze shows English choices and optional typing', (
+    tester,
+  ) async {
+    final step = ExerciseStep(
+      id: 'cloze-1',
+      type: 'cloze',
+      skill: 'writing',
+      prompt: 'Complete the sentence: 我飲＿＿。',
+      revealEnglish: 'I drink water.',
+      options: const [
+        {'id': 'water', 'label': '水'},
+        {'id': 'tea', 'label': '茶'},
+      ],
+      metadata: const {'allow_manual_input': true},
+    );
+    Map<String, dynamic>? response;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (value) => response = value,
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('I drink water.'), findsOneWidget);
+    await tester.tap(find.text('水'));
+    expect(response, {'selected_option_id': 'water'});
+
+    await tester.tap(find.text('TYPE INSTEAD'));
+    await tester.pump();
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
   testWidgets('3D lesson node exposes completed state', (tester) async {
     final lesson = LessonSummary(
       id: 'lesson-1',

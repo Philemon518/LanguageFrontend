@@ -20,6 +20,8 @@ class AppState extends ChangeNotifier {
   List<SkillProgress> skills = [];
   List<LibraryWord> libraryWords = [];
   int currentStepIndex = 0;
+  final List<int> _stepQueue = [];
+  int _queuePosition = 0;
   AttemptResult? lastResult;
   int sessionCorrect = 0;
   final List<String> sessionMistakes = [];
@@ -116,6 +118,8 @@ class AppState extends ChangeNotifier {
     skills = [];
     libraryWords = [];
     currentStepIndex = 0;
+    _stepQueue.clear();
+    _queuePosition = 0;
     lastResult = null;
     sessionCorrect = 0;
     sessionMistakes.clear();
@@ -158,6 +162,15 @@ class AppState extends ChangeNotifier {
       if (currentStepIndex >= currentLesson!.steps.length) {
         currentStepIndex = 0;
       }
+      _stepQueue
+        ..clear()
+        ..addAll(
+          List.generate(
+            currentLesson!.steps.length - currentStepIndex,
+            (index) => currentStepIndex + index,
+          ),
+        );
+      _queuePosition = 0;
       sessionCorrect = 0;
       sessionMistakes.clear();
       lastResult = null;
@@ -194,8 +207,11 @@ class AppState extends ChangeNotifier {
           skills = await _api.fetchSkills();
         }
         refreshLibrary();
-      } else if (!sessionMistakes.contains(step.id)) {
-        sessionMistakes.add(step.id);
+      } else {
+        _stepQueue.add(currentStepIndex);
+        if (!sessionMistakes.contains(step.id)) {
+          sessionMistakes.add(step.id);
+        }
       }
       notifyListeners();
       return lastResult;
@@ -214,9 +230,9 @@ class AppState extends ChangeNotifier {
   }
 
   void nextStep() {
-    if (currentLesson != null &&
-        currentStepIndex < currentLesson!.steps.length - 1) {
-      currentStepIndex++;
+    if (currentLesson != null && _queuePosition < _stepQueue.length - 1) {
+      _queuePosition++;
+      currentStepIndex = _stepQueue[_queuePosition];
       lastResult = null;
       _saveLessonState();
       notifyListeners();
@@ -225,8 +241,14 @@ class AppState extends ChangeNotifier {
 
   bool get lessonComplete =>
       currentLesson != null &&
-      currentStepIndex >= currentLesson!.steps.length - 1 &&
-      lastResult != null;
+      _stepQueue.isNotEmpty &&
+      _queuePosition == _stepQueue.length - 1 &&
+      lastResult?.correct == true;
+
+  int get sessionStepPosition =>
+      _stepQueue.isEmpty ? 0 : _queuePosition + 1;
+
+  int get sessionStepTotal => _stepQueue.length;
 
   ExerciseStep? get currentStep {
     if (currentLesson == null ||
