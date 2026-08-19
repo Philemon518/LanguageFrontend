@@ -15,6 +15,12 @@ class AppConfig {
     if (url.isEmpty) {
       return 'http://127.0.0.1:8000';
     }
+    if (url.startsWith('/')) {
+      while (url.length > 1 && url.endsWith('/')) {
+        url = url.substring(0, url.length - 1);
+      }
+      return url;
+    }
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://$url';
     }
@@ -22,6 +28,25 @@ class AppConfig {
       url = url.substring(0, url.length - 1);
     }
     return url;
+  }
+
+  static Uri resolveUri(String path) => Uri.parse('$apiBaseUrl$path');
+
+  static Uri resolveWebSocketUri(String path) {
+    final base = apiBaseUrl;
+    if (base.startsWith('/')) {
+      final page = Uri.base;
+      final scheme = page.scheme == 'https' ? 'wss' : 'ws';
+      return Uri(
+        scheme: scheme,
+        host: page.host,
+        port: page.hasPort ? page.port : null,
+        path: '$base$path',
+      );
+    }
+
+    final wsBase = base.replaceFirst('http', 'ws');
+    return Uri.parse('$wsBase$path');
   }
 }
 

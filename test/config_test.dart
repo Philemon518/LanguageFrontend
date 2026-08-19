@@ -15,4 +15,8 @@ void main() {
       'https://api.example.com',
     );
   });
+
+  test('apiBaseUrl preserves same-origin proxy prefix', () {
+    expect(AppConfig.normalizeBaseUrl('/api/'), '/api');
+  });
 }

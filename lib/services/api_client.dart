@@ -14,8 +14,7 @@ class ApiClient {
   set accessToken(String? value) => _accessToken = value;
 
   Uri authenticatedWebSocketUri(String path) {
-    final wsBase = AppConfig.apiBaseUrl.replaceFirst('http', 'ws');
-    final uri = Uri.parse('$wsBase$path');
+    final uri = AppConfig.resolveWebSocketUri(path);
     if (_accessToken == null) return uri;
     return uri.replace(queryParameters: {'token': _accessToken!});
   }
