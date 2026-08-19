@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -7,8 +8,22 @@ class AppConfig {
     defaultValue: 'http://127.0.0.1:8000',
   );
 
-  /// Ensures Railway build vars like `my-api.up.railway.app` become absolute URLs.
-  static String get apiBaseUrl => normalizeBaseUrl(_rawApiBaseUrl);
+  /// Local dev talks to the backend directly; deployed web uses same-origin `/api`.
+  static String get apiBaseUrl {
+    final normalized = normalizeBaseUrl(_rawApiBaseUrl);
+    if (kIsWeb && !_isLocalBackend(normalized)) {
+      return '/api';
+    }
+    return normalized;
+  }
+
+  static bool _isLocalBackend(String url) {
+    return url.contains('127.0.0.1') ||
+        url.contains('localhost') ||
+        url.contains('10.0.2.2') ||
+        url.startsWith('http://192.168.') ||
+        url.startsWith('http://10.');
+  }
 
   static String normalizeBaseUrl(String value) {
     var url = value.trim();

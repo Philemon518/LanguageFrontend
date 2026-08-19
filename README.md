@@ -18,12 +18,12 @@ Set these variables on the **frontend** service:
 | Variable | When | Example |
 | --- | --- | --- |
 | `BACKEND_URL` | runtime | `https://languagebackend-production.up.railway.app` |
-| `API_BASE_URL` | build (optional) | `/api` |
 
-The Docker image builds Flutter web with `API_BASE_URL=/api` by default. The
-app calls same-origin `/api/...` routes and nginx proxies them to
-`BACKEND_URL`, so auth and curriculum requests always reach the backend even
-if an old JS bundle is cached.
+You do **not** need `API_BASE_URL` on Railway. The web build always calls
+same-origin `/api/...` and nginx proxies those requests to `BACKEND_URL`.
+
+Optional: remove any existing `API_BASE_URL` variable from the frontend
+service so it cannot override the Docker build default.
 
 After deploy, hard refresh once (`Cmd+Shift+R`) to pick up the latest app
 bundle.
