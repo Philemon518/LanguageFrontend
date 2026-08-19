@@ -45,6 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       completed: state.progress?.lessonsCompleted ?? 0,
                     ),
                   ),
+                  if (state.lessons.isEmpty)
+                    SliverToBoxAdapter(
+                      child: _EmptyRoadState(onRetry: state.loadHome),
+                    ),
                   SliverList.builder(
                     itemCount: state.lessons.length,
                     itemBuilder: (context, index) {
@@ -461,6 +465,35 @@ class _ChunkyButtonState extends State<_ChunkyButton> {
           ),
         ],
       ),
+    ),
+  );
+}
+
+class _EmptyRoadState extends StatelessWidget {
+  const _EmptyRoadState({required this.onRetry});
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+    child: Column(
+      children: [
+        const Icon(Icons.route_rounded, size: 48, color: AppTheme.muted),
+        const SizedBox(height: 12),
+        const Text(
+          'Lessons are still loading',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'The course path appears once the backend finishes importing the curriculum.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(onPressed: onRetry, child: const Text('REFRESH')),
+      ],
     ),
   );
 }
