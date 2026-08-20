@@ -102,6 +102,7 @@ class _QuestionStageState extends State<QuestionStage> {
       ('MEANING', metadata['meaning'] as String? ?? ''),
       ('WORD TYPE', metadata['word_type'] as String? ?? ''),
       ('COMPONENTS', metadata['components_label'] as String? ?? ''),
+      ('FOCUS', metadata['focus_token'] as String? ?? ''),
     ].where((fact) => fact.$2.trim().isNotEmpty).toList();
 
     return SingleChildScrollView(

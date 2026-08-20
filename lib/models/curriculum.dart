@@ -29,6 +29,8 @@ class LessonSummary {
   final String id;
   final String unitId;
   final String title;
+  final String? targetTraditional;
+  final String? targetEnglish;
   final String lessonType;
   final int sortOrder;
   final int globalOrder;
@@ -42,6 +44,8 @@ class LessonSummary {
     required this.id,
     required this.unitId,
     required this.title,
+    this.targetTraditional,
+    this.targetEnglish,
     required this.lessonType,
     required this.sortOrder,
     this.globalOrder = 0,
@@ -56,6 +60,8 @@ class LessonSummary {
     id: json['id'] as String,
     unitId: json['unit_id'] as String,
     title: json['title'] as String,
+    targetTraditional: json['target_traditional'] as String?,
+    targetEnglish: json['target_english'] as String?,
     lessonType: json['lesson_type'] as String,
     sortOrder: json['sort_order'] as int,
     globalOrder: json['global_order'] as int? ?? 0,

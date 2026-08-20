@@ -347,16 +347,35 @@ class _RoadRow extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 150,
-                      child: Text(
-                        lesson.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: lesson.locked ? AppTheme.muted : AppTheme.ink,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12,
-                        ),
+                      child: Column(
+                        children: [
+                          Text(
+                            lesson.targetTraditional ??
+                                lesson.title.split(' · ').first,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: lesson.locked
+                                  ? AppTheme.muted
+                                  : AppTheme.ink,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            lesson.targetEnglish ??
+                                lesson.title.split(' · ').last,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppTheme.muted,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

@@ -190,7 +190,7 @@ void main() {
         'jyutping': 'seoi2',
         'tone_label': 'Tone 2 · rising',
         'meaning': 'water',
-        'word_type': 'noun',
+        'word_type': 'word',
         'components_label': '水 radical · pictograph',
       },
     );
@@ -210,11 +210,125 @@ void main() {
     );
 
     expect(find.text('Tone 2 · rising'), findsOneWidget);
-    expect(find.text('noun'), findsOneWidget);
+    expect(find.text('word'), findsOneWidget);
     expect(find.text('水 radical · pictograph'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.volume_up_rounded));
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byIcon(Icons.graphic_eq_rounded), findsOneWidget);
+  });
+
+  testWidgets('component introduction shows character parts metadata', (
+    tester,
+  ) async {
+    final step = ExerciseStep(
+      id: 'intro-component',
+      type: 'word_intro',
+      skill: 'reading',
+      prompt: 'Meet this character and its parts',
+      audio: const {'text': '休'},
+      revealCharacter: '休',
+      revealJyutping: 'jau1',
+      metadata: const {
+        'character': '休',
+        'pronunciation': 'jau',
+        'jyutping': 'jau1',
+        'tone_label': 'Tone 1 · high level',
+        'meaning': 'rest',
+        'word_type': 'character',
+        'components_label': '亻 (semantic) · 木 (semantic)',
+      },
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (_) {},
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('character'), findsOneWidget);
+    expect(find.text('亻 (semantic) · 木 (semantic)'), findsOneWidget);
+  });
+
+  testWidgets('vocabulary introduction shows phrase metadata', (tester) async {
+    final step = ExerciseStep(
+      id: 'intro-vocab',
+      type: 'word_intro',
+      skill: 'reading',
+      prompt: 'Meet this phrase',
+      audio: const {'text': '你好'},
+      revealCharacter: '你好',
+      revealJyutping: 'nei5 hou2',
+      metadata: const {
+        'character': '你好',
+        'pronunciation': 'nei hou',
+        'jyutping': 'nei5 hou2',
+        'tone_label': 'Tone 2 · rising',
+        'meaning': 'hello',
+        'word_type': 'phrase',
+      },
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (_) {},
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('phrase'), findsOneWidget);
+    expect(find.text('hello'), findsWidgets);
+  });
+
+  testWidgets('grammar introduction shows pattern focus token', (tester) async {
+    final step = ExerciseStep(
+      id: 'intro-grammar',
+      type: 'word_intro',
+      skill: 'reading',
+      prompt: 'Meet this sentence pattern',
+      audio: const {'text': '我係學生'},
+      revealCharacter: '我係學生',
+      revealJyutping: 'ngo5 hai6 hok6 saang1',
+      metadata: const {
+        'character': '我係學生',
+        'pronunciation': 'ngo hai hok saang',
+        'jyutping': 'ngo5 hai6 hok6 saang1',
+        'meaning': 'I am a student',
+        'word_type': 'pattern',
+        'focus_token': '係',
+      },
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (_) {},
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('pattern'), findsOneWidget);
+    expect(find.text('係'), findsOneWidget);
   });
 }
 

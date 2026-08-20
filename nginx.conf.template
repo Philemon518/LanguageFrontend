@@ -37,6 +37,10 @@ server {
         proxy_read_timeout 86400;
     }
 
+    location = /manifest.json {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+
     location = /index.html {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
     }
