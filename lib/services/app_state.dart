@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/curriculum.dart';
 import '../services/api_client.dart';
+import '../services/audio_service.dart';
 
 class AppState extends ChangeNotifier {
   AppState({ApiClient? api}) : _api = api ?? ApiClient();
@@ -177,6 +178,10 @@ class AppState extends ChangeNotifier {
       if (currentStepIndex >= (currentLesson?.steps.length ?? 0)) {
         currentStepIndex = 0;
       }
+      await AudioService.instance.prepareLesson(
+        currentLesson!,
+        priorityStepIndex: currentStepIndex,
+      );
     } catch (e) {
       error = e.toString();
     } finally {

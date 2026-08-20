@@ -116,6 +116,21 @@ class ExerciseStep {
     hint: json['hint'] as String?,
     metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
   );
+
+  List<String> collectAudioUrls() {
+    final urls = <String>[];
+    final stepUrl = audio?['url'] as String?;
+    if (stepUrl != null && stepUrl.isNotEmpty) {
+      urls.add(stepUrl);
+    }
+    for (final option in options) {
+      final optionUrl = (option['audio'] as Map?)?['url'] as String?;
+      if (optionUrl != null && optionUrl.isNotEmpty) {
+        urls.add(optionUrl);
+      }
+    }
+    return urls;
+  }
 }
 
 class LessonDocument {
@@ -153,6 +168,21 @@ class LessonDocument {
       json['grammar_points'] ?? [],
     ),
   );
+
+  List<String> collectAudioUrls() {
+    final urls = <String>{};
+    for (final step in steps) {
+      urls.addAll(step.collectAudioUrls());
+    }
+    return urls.toList();
+  }
+
+  List<String> collectAudioUrlsForStep(int stepIndex) {
+    if (stepIndex < 0 || stepIndex >= steps.length) {
+      return const [];
+    }
+    return steps[stepIndex].collectAudioUrls();
+  }
 }
 
 class AttemptResult {
