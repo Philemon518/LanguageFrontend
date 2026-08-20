@@ -120,6 +120,7 @@ void main() {
       type: 'cloze',
       skill: 'writing',
       prompt: 'Complete the sentence: 我飲＿＿。',
+      audio: const {'url': 'https://example.com/sentence.wav'},
       revealEnglish: 'I drink water.',
       options: const [
         {'id': 'water', 'label': '水'},
@@ -145,6 +146,7 @@ void main() {
     );
 
     expect(find.text('I drink water.'), findsOneWidget);
+    expect(find.byIcon(Icons.volume_up_rounded), findsOneWidget);
     await tester.tap(find.text('水'));
     expect(response, {'selected_option_id': 'water'});
 

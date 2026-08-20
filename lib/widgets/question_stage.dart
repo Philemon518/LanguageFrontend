@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 import '../core/config.dart';
 import '../models/curriculum.dart';
 import '../services/audio_service.dart';
+import '../utils/exercise_shuffle.dart';
 
 typedef SpeechAssessor =
     Future<String?> Function(
@@ -37,6 +38,7 @@ class _QuestionStageState extends State<QuestionStage> {
   String? selected;
   final textController = TextEditingController();
   final ordered = <Map<String, dynamic>>[];
+  late List<Map<String, dynamic>> shuffledOptions;
   final recorder = AudioRecorder();
   StreamSubscription<Uint8List>? recordingSubscription;
   final recordedBytes = <int>[];
@@ -48,7 +50,9 @@ class _QuestionStageState extends State<QuestionStage> {
   @override
   void initState() {
     super.initState();
+    shuffledOptions = shuffleExerciseOptions(widget.step.options);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.step.type == 'cloze') return;
       final url = widget.step.audio?['url'] as String?;
       if (url != null) AudioService.instance.play(url);
     });
@@ -200,8 +204,8 @@ class _QuestionStageState extends State<QuestionStage> {
   Widget _buildChoice() {
     final step = widget.step;
     final visibleOptions = widget.disabled && selected != null
-        ? step.options.where((option) => option['id'] == selected)
-        : step.options;
+        ? shuffledOptions.where((option) => option['id'] == selected)
+        : shuffledOptions;
     return Column(
       children: [
         if (step.audio != null)
@@ -235,7 +239,7 @@ class _QuestionStageState extends State<QuestionStage> {
   }
 
   Widget _buildOrder() {
-    final available = widget.step.options
+    final available = shuffledOptions
         .where((option) => !ordered.any((item) => item['id'] == option['id']))
         .toList();
     return Column(
@@ -308,12 +312,24 @@ class _QuestionStageState extends State<QuestionStage> {
   Widget _buildCloze() {
     final step = widget.step;
     final visibleOptions = widget.disabled && selected != null
-        ? step.options.where((option) => option['id'] == selected)
-        : step.options;
+        ? shuffledOptions.where((option) => option['id'] == selected)
+        : shuffledOptions;
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 8),
       children: [
+        if (step.audio != null) ...[
+          Center(
+            child: _AudioOrb(
+              onTap: widget.disabled
+                  ? null
+                  : () => AudioService.instance.play(
+                      step.audio?['url'] as String?,
+                    ),
+            ),
+          ),
+          const SizedBox(height: 18),
+        ],
         if (step.revealEnglish != null) ...[
           Container(
             width: double.infinity,
@@ -578,10 +594,10 @@ class _QuestionStageState extends State<QuestionStage> {
         ),
         const Spacer(),
         ...(widget.disabled && selected != null
-                ? widget.step.options.where(
+                ? shuffledOptions.where(
                     (option) => option['id'] == selected,
                   )
-                : widget.step.options)
+                : shuffledOptions)
             .map((option) {
               final id = option['id'] as String;
               return Padding(
