@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(lesson.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 6),
             Text(
-              '${lesson.questionCount} questions · ${_label(lesson.phase)}',
+              '${lesson.wordCount} words · ${lesson.questionCount} steps · ${_label(lesson.phase)}',
               style: const TextStyle(
                 color: AppTheme.muted,
                 fontWeight: FontWeight.w700,
@@ -350,9 +350,8 @@ class _RoadRow extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            lesson.targetTraditional ??
-                                lesson.title.split(' · ').first,
-                            maxLines: 1,
+                            lesson.title,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -360,21 +359,21 @@ class _RoadRow extends StatelessWidget {
                                   ? AppTheme.muted
                                   : AppTheme.ink,
                               fontWeight: FontWeight.w900,
-                              fontSize: 15,
+                              fontSize: 13,
                             ),
                           ),
-                          Text(
-                            lesson.targetEnglish ??
-                                lesson.title.split(' · ').last,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppTheme.muted,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
+                          if ((lesson.theme ?? '').isNotEmpty)
+                            Text(
+                              lesson.theme!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: AppTheme.muted,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),

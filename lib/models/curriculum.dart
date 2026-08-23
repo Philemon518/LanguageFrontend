@@ -31,6 +31,8 @@ class LessonSummary {
   final String title;
   final String? targetTraditional;
   final String? targetEnglish;
+  final String? theme;
+  final int wordCount;
   final String lessonType;
   final int sortOrder;
   final int globalOrder;
@@ -46,6 +48,8 @@ class LessonSummary {
     required this.title,
     this.targetTraditional,
     this.targetEnglish,
+    this.theme,
+    this.wordCount = 1,
     required this.lessonType,
     required this.sortOrder,
     this.globalOrder = 0,
@@ -62,6 +66,8 @@ class LessonSummary {
     title: json['title'] as String,
     targetTraditional: json['target_traditional'] as String?,
     targetEnglish: json['target_english'] as String?,
+    theme: json['theme'] as String?,
+    wordCount: json['word_count'] as int? ?? 1,
     lessonType: json['lesson_type'] as String,
     sortOrder: json['sort_order'] as int,
     globalOrder: json['global_order'] as int? ?? 0,
