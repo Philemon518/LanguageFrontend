@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       xp: state.progress?.totalXp ?? 0,
                       streak: state.progress?.streakDays ?? 0,
                       completed: state.progress?.lessonsCompleted ?? 0,
+                      totalLessons: state.lessons.length,
                     ),
                   ),
                   if (state.lessons.isEmpty)
@@ -141,11 +142,13 @@ class _HomeHeader extends StatelessWidget {
     required this.xp,
     required this.streak,
     required this.completed,
+    required this.totalLessons,
   });
 
   final int xp;
   final int streak;
   final int completed;
+  final int totalLessons;
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +211,9 @@ class _HomeHeader extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '$completed of 40 lessons complete',
+                          totalLessons == 0
+                              ? 'Loading lessons…'
+                              : '$completed of $totalLessons lessons complete',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -347,34 +352,16 @@ class _RoadRow extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 150,
-                      child: Column(
-                        children: [
-                          Text(
-                            lesson.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: lesson.locked
-                                  ? AppTheme.muted
-                                  : AppTheme.ink,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13,
-                            ),
-                          ),
-                          if ((lesson.theme ?? '').isNotEmpty)
-                            Text(
-                              lesson.theme!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppTheme.muted,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 10,
-                              ),
-                            ),
-                        ],
+                      child: Text(
+                        lesson.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: lesson.locked ? AppTheme.muted : AppTheme.ink,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
