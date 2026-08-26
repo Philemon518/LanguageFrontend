@@ -56,8 +56,17 @@ void main() {
           'type': 'same_different',
           'skill': 'listening',
           'prompt': 'Same or different?',
-          'audio_a': {'url': '/media/a.wav'},
-          'audio_b': {'url': '/media/b.wav'},
+          'audio': {'url': '/media/a.wav'},
+          'comparison': {
+            'samples': [
+              {
+                'audio': {'url': '/media/a.wav'},
+              },
+              {
+                'audio': {'url': '/media/b.wav'},
+              },
+            ],
+          },
           'image_asset': 'assets/number_gestures/one.png',
           'options': [
             {

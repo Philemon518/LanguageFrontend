@@ -164,8 +164,17 @@ void main() {
       'type': 'same_different',
       'skill': 'listening',
       'prompt': 'Do these sound the same?',
-      'audio_a': {'url': 'https://example.com/a.wav'},
-      'audio_b': {'url': 'https://example.com/b.wav'},
+      'audio': {'url': 'https://example.com/a.wav'},
+      'comparison': {
+        'samples': [
+          {
+            'audio': {'url': 'https://example.com/a.wav'},
+          },
+          {
+            'audio': {'url': 'https://example.com/b.wav'},
+          },
+        ],
+      },
       'options': [
         {'id': 'same', 'label': 'Same'},
         {'id': 'different', 'label': 'Different'},

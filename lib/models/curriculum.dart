@@ -166,19 +166,27 @@ class ExerciseStep {
   }
 
   List<Map<String, dynamic>> get audioRefs {
-    final refs = <Map<String, dynamic>>[];
-    void add(dynamic value) {
+    void collect(dynamic value, List<Map<String, dynamic>> refs) {
       if (value is Map && value['url'] is String) {
         refs.add(Map<String, dynamic>.from(value));
       } else if (value is List) {
         for (final item in value) {
-          add(item);
+          collect(item, refs);
+        }
+      } else if (value is Map) {
+        for (final nested in value.values) {
+          collect(nested, refs);
         }
       }
     }
 
-    add(audio);
-    add(extra['audio']);
+    final comparisonRefs = <Map<String, dynamic>>[];
+    collect(extra['comparison'], comparisonRefs);
+    if (comparisonRefs.isNotEmpty) return comparisonRefs;
+
+    final refs = <Map<String, dynamic>>[];
+    collect(audio, refs);
+    collect(extra['audio'], refs);
     for (final key in const [
       'audios',
       'audio_pair',
@@ -190,8 +198,8 @@ class ExerciseStep {
       'first_audio',
       'second_audio',
     ]) {
-      add(extra[key]);
-      add(metadata[key]);
+      collect(extra[key], refs);
+      collect(metadata[key], refs);
     }
     return refs;
   }
