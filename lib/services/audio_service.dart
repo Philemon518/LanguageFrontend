@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -7,17 +8,55 @@ import 'package:just_audio/just_audio.dart';
 import '../models/curriculum.dart';
 
 class AudioService {
-  AudioService({http.Client? client}) : _client = client ?? http.Client();
+  AudioService({http.Client? client, Random? feedbackRandom})
+    : _client = client ?? http.Client(),
+      _feedbackRandom = feedbackRandom ?? Random();
 
   static final AudioService instance = AudioService();
 
+  static const correctFeedbackAssets = [
+    'assets/sounds/correct_anime_wow.mp3',
+    'assets/sounds/correct_apple_pay.mp3',
+    'assets/sounds/correct_coin.mp3',
+    'assets/sounds/correct_hehe.mp3',
+  ];
+
+  static const failFeedbackAssets = [
+    'assets/sounds/fail_fortnite.mp3',
+    'assets/sounds/fail_lego.mp3',
+    'assets/sounds/fail_fah.mp3',
+    'assets/sounds/fail_bone_crack.mp3',
+  ];
+
   final http.Client _client;
+  final Random _feedbackRandom;
   AudioPlayer? _player;
+  AudioPlayer? _feedbackPlayer;
   final Map<String, Uint8List> _cache = {};
   final Map<String, Future<void>> _inFlight = {};
   String? _activeLessonId;
 
   AudioPlayer get _playerInstance => _player ??= AudioPlayer();
+  AudioPlayer get _feedbackPlayerInstance => _feedbackPlayer ??= AudioPlayer();
+
+  @visibleForTesting
+  String pickFeedbackAsset(bool correct) {
+    final pool = correct ? correctFeedbackAssets : failFeedbackAssets;
+    return pool[_feedbackRandom.nextInt(pool.length)];
+  }
+
+  Future<void> playFeedback({required bool correct}) async {
+    final asset = pickFeedbackAsset(correct);
+    try {
+      await _feedbackPlayerInstance.stop();
+      await _feedbackPlayerInstance.setAudioSource(AudioSource.asset(asset));
+      await _feedbackPlayerInstance.setSpeed(1.0);
+      unawaited(_feedbackPlayerInstance.play());
+    } catch (error, stackTrace) {
+      debugPrint('Feedback audio failed for $asset: $error');
+      debugPrint('$stackTrace');
+    }
+  }
 
   Future<void> prepareLesson(
     LessonDocument lesson, {
@@ -102,7 +141,9 @@ class AudioService {
   Future<void> dispose() async {
     _client.close();
     await _player?.dispose();
+    await _feedbackPlayer?.dispose();
     _player = null;
+    _feedbackPlayer = null;
     _cache.clear();
     _inFlight.clear();
     _activeLessonId = null;

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:canto_mobile/models/curriculum.dart';
 import 'package:canto_mobile/services/audio_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,6 +76,18 @@ void main() {
       'https://example.com/word.wav',
       'https://example.com/other.wav',
     ]);
+  });
+
+  test('pickFeedbackAsset chooses from the expected sound pool', () {
+    final service = AudioService(feedbackRandom: Random(7));
+
+    final correct = service.pickFeedbackAsset(true);
+    final fail = service.pickFeedbackAsset(false);
+
+    expect(AudioService.correctFeedbackAssets, contains(correct));
+    expect(AudioService.failFeedbackAssets, contains(fail));
+    expect(AudioService.correctFeedbackAssets, hasLength(4));
+    expect(AudioService.failFeedbackAssets, hasLength(4));
   });
 
   test('AudioService caches lesson audio in memory', () async {

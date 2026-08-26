@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/curriculum.dart';
 import '../../services/app_state.dart';
+import '../../services/audio_service.dart';
 import '../../core/config.dart';
 import '../../widgets/question_stage.dart';
 
@@ -120,7 +123,10 @@ class _LessonScreenState extends State<LessonScreen> {
     if (state.lastResult == null) {
       if (response == null) return;
       setState(() => checking = true);
-      await state.submitCurrentStep(response!);
+      final result = await state.submitCurrentStep(response!);
+      if (result != null) {
+        unawaited(AudioService.instance.playFeedback(correct: result.correct));
+      }
       if (mounted) setState(() => checking = false);
       return;
     }
