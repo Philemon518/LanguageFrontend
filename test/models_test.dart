@@ -37,6 +37,52 @@ void main() {
     expect(doc.steps.length, 1);
   });
 
+  test('LessonDocument parses rich intro and exercise media', () {
+    final doc = LessonDocument.fromJson({
+      'id': 'numbers',
+      'unit_id': 'unit-0',
+      'title': 'Numbers',
+      'lesson_type': 'sound',
+      'objectives': ['Recognize hand gestures'],
+      'lesson_intro': {
+        'title': 'Meet Cantonese numbers',
+        'sections': [
+          {'heading': 'Notice', 'body': 'Gestures are commonly used.'},
+        ],
+      },
+      'steps': [
+        {
+          'id': 'same-1',
+          'type': 'same_different',
+          'skill': 'listening',
+          'prompt': 'Same or different?',
+          'audio_a': {'url': '/media/a.wav'},
+          'audio_b': {'url': '/media/b.wav'},
+          'image_asset': 'assets/number_gestures/one.png',
+          'options': [
+            {
+              'id': 'same',
+              'label': 'Same',
+              'image': {'asset': 'assets/number_gestures/two.png'},
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(doc.lessonIntro?['title'], 'Meet Cantonese numbers');
+    expect(doc.steps.single.audioRefs, hasLength(2));
+    expect(doc.steps.single.collectAudioUrls(), [
+      '/media/a.wav',
+      '/media/b.wav',
+    ]);
+    expect(doc.steps.single.imageSource, 'assets/number_gestures/one.png');
+    expect(
+      ExerciseStep.imageSourceForOption(doc.steps.single.options.single),
+      'assets/number_gestures/two.png',
+    );
+  });
+
   test('LessonSummary parses road state', () {
     final lesson = LessonSummary.fromJson({
       'id': 'v2-sound-01',

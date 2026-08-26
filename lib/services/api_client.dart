@@ -118,14 +118,7 @@ class ApiClient {
     );
     if (resp.statusCode != 200) throw Exception('Failed to load lesson');
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    for (final rawStep in data['steps'] as List? ?? const []) {
-      final step = rawStep as Map<String, dynamic>;
-      _absolutizeAudio(step['audio'] as Map<String, dynamic>?);
-      for (final rawOption in step['options'] as List? ?? const []) {
-        final option = rawOption as Map<String, dynamic>;
-        _absolutizeAudio(option['audio'] as Map<String, dynamic>?);
-      }
-    }
+    _absolutizeMediaUrls(data);
     return LessonDocument.fromJson(data);
   }
 
@@ -181,16 +174,14 @@ class ApiClient {
     );
     if (resp.statusCode != 200) throw Exception('Failed to load library');
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    return (data['words'] as List)
-        .map((word) {
-          final entry = Map<String, dynamic>.from(word as Map<String, dynamic>);
-          final audioUrl = entry['audio_url'] as String?;
-          if (audioUrl != null && audioUrl.startsWith('/')) {
-            entry['audio_url'] = '${AppConfig.apiBaseUrl}$audioUrl';
-          }
-          return LibraryWord.fromJson(entry);
-        })
-        .toList();
+    return (data['words'] as List).map((word) {
+      final entry = Map<String, dynamic>.from(word as Map<String, dynamic>);
+      final audioUrl = entry['audio_url'] as String?;
+      if (audioUrl != null) {
+        entry['audio_url'] = AppConfig.resolveMediaUrl(audioUrl);
+      }
+      return LibraryWord.fromJson(entry);
+    }).toList();
   }
 
   Future<ConversationSession> createConversation({
@@ -262,10 +253,21 @@ class ApiClient {
     return fallback;
   }
 
-  void _absolutizeAudio(Map<String, dynamic>? audio) {
-    final url = audio?['url'] as String?;
-    if (url != null && url.startsWith('/')) {
-      audio!['url'] = '${AppConfig.apiBaseUrl}$url';
+  void _absolutizeMediaUrls(dynamic value) {
+    if (value is List) {
+      for (final item in value) {
+        _absolutizeMediaUrls(item);
+      }
+      return;
+    }
+    if (value is! Map) return;
+    for (final entry in value.entries.toList()) {
+      if ((entry.key == 'url' || entry.key == 'image_url') &&
+          entry.value is String) {
+        value[entry.key] = AppConfig.resolveMediaUrl(entry.value as String);
+      } else {
+        _absolutizeMediaUrls(entry.value);
+      }
     }
   }
 }

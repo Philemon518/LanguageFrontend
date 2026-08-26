@@ -1,4 +1,5 @@
 import 'package:canto_mobile/features/auth/auth_screen.dart';
+import 'package:canto_mobile/features/lesson/lesson_screen.dart';
 import 'package:canto_mobile/features/progress/progress_screen.dart';
 import 'package:canto_mobile/models/curriculum.dart';
 import 'package:canto_mobile/services/api_client.dart';
@@ -153,6 +154,168 @@ void main() {
     await tester.tap(find.text('TYPE INSTEAD'));
     await tester.pump();
     expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('same/different exercise renders two audio controls', (
+    tester,
+  ) async {
+    final step = ExerciseStep.fromJson({
+      'id': 'same-1',
+      'type': 'same_different',
+      'skill': 'listening',
+      'prompt': 'Do these sound the same?',
+      'audio_a': {'url': 'https://example.com/a.wav'},
+      'audio_b': {'url': 'https://example.com/b.wav'},
+      'options': [
+        {'id': 'same', 'label': 'Same'},
+        {'id': 'different', 'label': 'Different'},
+      ],
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (_) {},
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('A'), findsOneWidget);
+    expect(find.text('B'), findsOneWidget);
+    expect(find.byIcon(Icons.volume_up_rounded), findsNWidgets(2));
+  });
+
+  testWidgets('exercise lesson intro renders goals and vocabulary', (
+    tester,
+  ) async {
+    final step = ExerciseStep(
+      id: 'intro',
+      type: 'lesson_intro',
+      skill: 'listening',
+      prompt: 'Level tones',
+      metadata: const {
+        'lesson_intro': {
+          'summary': 'Train your ear before reading.',
+          'learning_goals': ['Hear pitch movement'],
+          'new_items': [
+            {'traditional': '詩', 'jyutping': 'si1', 'english': 'poem'},
+          ],
+          'review_items': [],
+        },
+      },
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (_) {},
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('exerciseLessonIntroScrollView')),
+      findsOneWidget,
+    );
+    expect(find.text('Train your ear before reading.'), findsOneWidget);
+    expect(find.text('Hear pitch movement'), findsOneWidget);
+    expect(find.text('詩'), findsOneWidget);
+    expect(find.text('si1'), findsOneWidget);
+  });
+
+  testWidgets('character typing preserves Chinese input', (tester) async {
+    final step = ExerciseStep(
+      id: 'character-1',
+      type: 'type_character',
+      skill: 'writing',
+      prompt: 'Type the character for water',
+    );
+    Map<String, dynamic>? response;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (value) => response = value,
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), '水');
+    expect(response, {'text': '水', 'answer': '水'});
+    expect(find.text('水'), findsOneWidget);
+  });
+
+  testWidgets('lesson intro scrolls before the first exercise', (tester) async {
+    final api = _FakeApiClient()
+      ..lessonDocument = LessonDocument(
+        id: 'lesson-with-intro',
+        unitId: 'unit-0',
+        title: 'Cantonese numbers',
+        lessonType: 'sound',
+        objectives: const ['Recognize number gestures'],
+        lessonIntro: const {
+          'title': 'Welcome to numbers',
+          'description': 'A visual and listening introduction.',
+          'sections': [
+            {
+              'heading': 'Use your hands',
+              'body': 'Number gestures help people communicate clearly.',
+            },
+          ],
+        },
+        steps: [
+          ExerciseStep(
+            id: 'first',
+            type: 'select_meaning',
+            skill: 'listening',
+            prompt: 'Choose one',
+            options: [
+              {'id': 'one', 'label': 'One'},
+            ],
+          ),
+        ],
+      );
+    final state = AppState(api: api);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: state,
+        child: const MaterialApp(
+          home: LessonScreen(lessonId: 'lesson-with-intro'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('lessonIntroScrollView')), findsOneWidget);
+    expect(find.text('Welcome to numbers'), findsOneWidget);
+    expect(find.text('USE YOUR HANDS'), findsOneWidget);
+    expect(find.text('Choose one'), findsNothing);
+
+    await tester.tap(find.text('START LESSON'));
+    await tester.pump();
+    expect(find.text('Choose one'), findsOneWidget);
   });
 
   testWidgets('3D lesson node exposes completed state', (tester) async {
@@ -336,6 +499,7 @@ void main() {
 
 class _FakeApiClient extends ApiClient {
   bool accountDeleted = false;
+  LessonDocument? lessonDocument;
 
   @override
   Future<AuthSession> login({
@@ -353,6 +517,10 @@ class _FakeApiClient extends ApiClient {
   Future<void> deleteAccount() async {
     accountDeleted = true;
   }
+
+  @override
+  Future<LessonDocument> fetchLesson(String lessonId) async =>
+      lessonDocument ?? (throw StateError('No fake lesson configured'));
 
   AuthSession _session(String username) => AuthSession(
     accessToken: 'test-token',

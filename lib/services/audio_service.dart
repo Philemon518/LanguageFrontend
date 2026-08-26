@@ -19,7 +19,10 @@ class AudioService {
 
   AudioPlayer get _playerInstance => _player ??= AudioPlayer();
 
-  Future<void> prepareLesson(LessonDocument lesson, {int priorityStepIndex = 0}) async {
+  Future<void> prepareLesson(
+    LessonDocument lesson, {
+    int priorityStepIndex = 0,
+  }) async {
     if (_activeLessonId != lesson.id) {
       _cache.clear();
       _inFlight.clear();
@@ -40,7 +43,7 @@ class AudioService {
     await Future.wait(urls.map(_ensureCached));
   }
 
-  Future<void> play(String? url) async {
+  Future<void> play(String? url, {double speed = 1.0}) async {
     if (url == null || url.isEmpty) return;
     try {
       await _ensureCached(url);
@@ -49,16 +52,18 @@ class AudioService {
 
       await _playerInstance.stop();
       await _playerInstance.setAudioSource(
-        AudioSource.uri(
-          Uri.dataFromBytes(bytes, mimeType: _mimeTypeFor(url)),
-        ),
+        AudioSource.uri(Uri.dataFromBytes(bytes, mimeType: _mimeTypeFor(url))),
       );
+      await _playerInstance.setSpeed(speed);
       await _playerInstance.play();
     } catch (error, stackTrace) {
       debugPrint('Audio playback failed for $url: $error');
       debugPrint('$stackTrace');
     }
   }
+
+  /// Manual controls alternate normal and learner-friendly slow playback.
+  static double manualSpeedForTap(int tapIndex) => tapIndex.isEven ? 1.0 : 0.5;
 
   Future<void> _ensureCached(String url) async {
     if (_cache.containsKey(url)) return;
@@ -80,7 +85,9 @@ class AudioService {
   Future<void> _fetch(String url) async {
     final response = await _client.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      throw Exception('Failed to cache audio ($url): HTTP ${response.statusCode}');
+      throw Exception(
+        'Failed to cache audio ($url): HTTP ${response.statusCode}',
+      );
     }
     _cache[url] = Uint8List.fromList(response.bodyBytes);
   }

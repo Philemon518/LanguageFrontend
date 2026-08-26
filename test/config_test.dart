@@ -19,4 +19,15 @@ void main() {
   test('apiBaseUrl preserves same-origin proxy prefix', () {
     expect(AppConfig.normalizeBaseUrl('/api/'), '/api');
   });
+
+  test('media URLs preserve bundled gesture assets', () {
+    expect(
+      AppConfig.resolveMediaUrl('assets/number_gestures/one.png'),
+      'assets/number_gestures/one.png',
+    );
+    expect(
+      AppConfig.resolveMediaUrl('/assets/number_gestures/two.png'),
+      '/assets/number_gestures/two.png',
+    );
+  });
 }

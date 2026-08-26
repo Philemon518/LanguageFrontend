@@ -92,6 +92,7 @@ class ExerciseStep {
   final String? revealEnglish;
   final String? hint;
   final Map<String, dynamic> metadata;
+  final Map<String, dynamic> extra;
 
   ExerciseStep({
     required this.id,
@@ -106,28 +107,116 @@ class ExerciseStep {
     this.revealEnglish,
     this.hint,
     this.metadata = const {},
+    this.extra = const {},
   });
 
-  factory ExerciseStep.fromJson(Map<String, dynamic> json) => ExerciseStep(
-    id: json['id'] as String,
-    type: json['type'] as String,
-    skill: json['skill'] as String,
-    prompt: json['prompt'] as String,
-    audio: json['audio'] as Map<String, dynamic>?,
-    options: List<Map<String, dynamic>>.from(json['options'] ?? []),
-    correctOptionId: json['correct_option_id'] as String?,
-    revealJyutping: json['reveal_jyutping'] as String?,
-    revealCharacter: json['reveal_character'] as String?,
-    revealEnglish: json['reveal_english'] as String?,
-    hint: json['hint'] as String?,
-    metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
-  );
+  factory ExerciseStep.fromJson(Map<String, dynamic> json) {
+    const knownKeys = {
+      'id',
+      'type',
+      'skill',
+      'prompt',
+      'audio',
+      'options',
+      'correct_option_id',
+      'reveal_jyutping',
+      'reveal_character',
+      'reveal_english',
+      'hint',
+      'metadata',
+    };
+    return ExerciseStep(
+      id: json['id'] as String,
+      type: json['type'] as String,
+      skill: json['skill'] as String,
+      prompt: json['prompt'] as String,
+      audio: json['audio'] is Map
+          ? Map<String, dynamic>.from(json['audio'] as Map)
+          : null,
+      options: List<Map<String, dynamic>>.from(json['options'] ?? []),
+      correctOptionId: json['correct_option_id'] as String?,
+      revealJyutping: json['reveal_jyutping'] as String?,
+      revealCharacter: json['reveal_character'] as String?,
+      revealEnglish: json['reveal_english'] as String?,
+      hint: json['hint'] as String?,
+      metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
+      extra: Map<String, dynamic>.fromEntries(
+        json.entries.where(
+          (entry) =>
+              !knownKeys.contains(entry.key) ||
+              (entry.key == 'audio' && entry.value is! Map),
+        ),
+      ),
+    );
+  }
+
+  String? get imageSource {
+    for (final value in [
+      extra['image'],
+      extra['image_url'],
+      extra['image_asset'],
+      metadata['image'],
+      metadata['image_url'],
+      metadata['image_asset'],
+    ]) {
+      final source = _mediaSource(value);
+      if (source != null) return source;
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> get audioRefs {
+    final refs = <Map<String, dynamic>>[];
+    void add(dynamic value) {
+      if (value is Map && value['url'] is String) {
+        refs.add(Map<String, dynamic>.from(value));
+      } else if (value is List) {
+        for (final item in value) {
+          add(item);
+        }
+      }
+    }
+
+    add(audio);
+    add(extra['audio']);
+    for (final key in const [
+      'audios',
+      'audio_pair',
+      'audio_refs',
+      'audio_a',
+      'audio_b',
+      'audio_1',
+      'audio_2',
+      'first_audio',
+      'second_audio',
+    ]) {
+      add(extra[key]);
+      add(metadata[key]);
+    }
+    return refs;
+  }
 
   List<String> collectAudioUrls() {
-    final urls = <String>[];
-    final stepUrl = audio?['url'] as String?;
-    if (stepUrl != null && stepUrl.isNotEmpty) {
-      urls.add(stepUrl);
+    final urls = <String>{};
+    void collectNested(dynamic value) {
+      if (value is List) {
+        for (final item in value) {
+          collectNested(item);
+        }
+      } else if (value is Map) {
+        final url = value['url'];
+        if (url is String && url.isNotEmpty) urls.add(url);
+        for (final nested in value.values) {
+          collectNested(nested);
+        }
+      }
+    }
+
+    for (final audioRef in audioRefs) {
+      final url = audioRef['url'] as String?;
+      if (url != null && url.isNotEmpty) {
+        urls.add(url);
+      }
     }
     for (final option in options) {
       final optionUrl = (option['audio'] as Map?)?['url'] as String?;
@@ -135,7 +224,32 @@ class ExerciseStep {
         urls.add(optionUrl);
       }
     }
-    return urls;
+    collectNested(metadata);
+    collectNested(extra);
+    return urls.toList();
+  }
+
+  static String? imageSourceForOption(Map<String, dynamic> option) {
+    for (final value in [
+      option['image'],
+      option['image_url'],
+      option['image_asset'],
+    ]) {
+      final source = _mediaSource(value);
+      if (source != null) return source;
+    }
+    return null;
+  }
+
+  static String? _mediaSource(dynamic value) {
+    if (value is String && value.trim().isNotEmpty) return value.trim();
+    if (value is Map) {
+      for (final key in const ['url', 'asset', 'asset_path', 'path']) {
+        final nested = value[key];
+        if (nested is String && nested.trim().isNotEmpty) return nested.trim();
+      }
+    }
+    return null;
   }
 }
 
@@ -148,6 +262,7 @@ class LessonDocument {
   final List<ExerciseStep> steps;
   final List<Map<String, dynamic>> vocabulary;
   final List<Map<String, dynamic>> grammarPoints;
+  final Map<String, dynamic>? lessonIntro;
 
   LessonDocument({
     required this.id,
@@ -158,6 +273,7 @@ class LessonDocument {
     required this.steps,
     this.vocabulary = const [],
     this.grammarPoints = const [],
+    this.lessonIntro,
   });
 
   factory LessonDocument.fromJson(Map<String, dynamic> json) => LessonDocument(
@@ -173,6 +289,9 @@ class LessonDocument {
     grammarPoints: List<Map<String, dynamic>>.from(
       json['grammar_points'] ?? [],
     ),
+    lessonIntro: json['lesson_intro'] is Map
+        ? Map<String, dynamic>.from(json['lesson_intro'] as Map)
+        : null,
   );
 
   List<String> collectAudioUrls() {

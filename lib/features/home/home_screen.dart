@@ -28,6 +28,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final activeLessonIndex = state.lessons.indexWhere(
+      (lesson) => !lesson.completed && !lesson.locked,
+    );
+    final activeUnitNumber = activeLessonIndex < 0
+        ? 0
+        : state.units.indexWhere(
+            (unit) => unit.id == state.lessons[activeLessonIndex].unitId,
+          );
     return Scaffold(
       body: state.loading
           ? const Center(child: CircularProgressIndicator())
@@ -44,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       streak: state.progress?.streakDays ?? 0,
                       completed: state.progress?.lessonsCompleted ?? 0,
                       totalLessons: state.lessons.length,
+                      unitNumber: activeUnitNumber < 0 ? 0 : activeUnitNumber,
                     ),
                   ),
                   if (state.lessons.isEmpty)
@@ -58,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? state.lessons[index - 1]
                           : null;
                       final startsPhase =
-                          previous == null || previous.phase != lesson.phase;
+                          previous == null || previous.unitId != lesson.unitId;
                       final currentIndex = state.lessons.indexWhere(
                         (item) => !item.completed && !item.locked,
                       );
@@ -67,11 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (startsPhase)
                             _PhaseBanner(
                               phase: lesson.phase,
-                              number:
-                                  state.units.indexWhere(
-                                    (u) => u.id == lesson.unitId,
-                                  ) +
-                                  1,
+                              number: state.units.indexWhere(
+                                (u) => u.id == lesson.unitId,
+                              ),
                             ),
                           _RoadRow(
                             lesson: lesson,
@@ -143,12 +150,14 @@ class _HomeHeader extends StatelessWidget {
     required this.streak,
     required this.completed,
     required this.totalLessons,
+    required this.unitNumber,
   });
 
   final int xp;
   final int streak;
   final int completed;
   final int totalLessons;
+  final int unitNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -194,9 +203,9 @@ class _HomeHeader extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'BEGINNER · UNIT 1',
-                          style: TextStyle(
+                        Text(
+                          'BEGINNER · UNIT $unitNumber',
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1,
@@ -280,7 +289,7 @@ class _PhaseBanner extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            'PHASE $number',
+            'UNIT ${number < 0 ? 0 : number}',
             style: const TextStyle(
               color: Colors.white70,
               fontWeight: FontWeight.w900,

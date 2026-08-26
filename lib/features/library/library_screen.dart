@@ -30,9 +30,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final words = state.libraryWords;
 
     return Scaffold(
-      appBar: widget.embedded
-          ? null
-          : AppBar(title: const Text('Library')),
+      appBar: widget.embedded ? null : AppBar(title: const Text('Library')),
       body: SafeArea(
         child: words.isEmpty && state.loading
             ? const Center(child: CircularProgressIndicator())
@@ -85,10 +83,7 @@ class _EmptyLibrary extends StatelessWidget {
               color: AppTheme.purple.withValues(alpha: .55),
             ),
             const SizedBox(height: 16),
-            Text(
-              'No words yet',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('No words yet', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             const Text(
               'Start a lesson on the Learn tab. Every new word you meet will appear here for review.',
@@ -100,10 +95,7 @@ class _EmptyLibrary extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            OutlinedButton(
-              onPressed: onRefresh,
-              child: const Text('REFRESH'),
-            ),
+            OutlinedButton(onPressed: onRefresh, child: const Text('REFRESH')),
           ],
         ),
       ),
@@ -111,13 +103,21 @@ class _EmptyLibrary extends StatelessWidget {
   }
 }
 
-class _WordCard extends StatelessWidget {
+class _WordCard extends StatefulWidget {
   const _WordCard({required this.word});
 
   final LibraryWord word;
 
   @override
+  State<_WordCard> createState() => _WordCardState();
+}
+
+class _WordCardState extends State<_WordCard> {
+  int audioTapCount = 0;
+
+  @override
   Widget build(BuildContext context) {
+    final word = widget.word;
     final phaseColor = AppTheme.phaseColor(word.phase);
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -196,8 +196,18 @@ class _WordCard extends StatelessWidget {
                       backgroundColor: phaseColor.withValues(alpha: .16),
                       foregroundColor: phaseColor,
                     ),
-                    onPressed: () => AudioService.instance.play(word.audioUrl),
-                    icon: const Icon(Icons.volume_up_rounded),
+                    onPressed: () {
+                      final speed = AudioService.manualSpeedForTap(
+                        audioTapCount,
+                      );
+                      setState(() => audioTapCount++);
+                      AudioService.instance.play(word.audioUrl, speed: speed);
+                    },
+                    icon: Icon(
+                      audioTapCount.isEven
+                          ? Icons.volume_up_rounded
+                          : Icons.slow_motion_video_rounded,
+                    ),
                   ),
               ],
             ),

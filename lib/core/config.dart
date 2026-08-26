@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'api_base_stub.dart' if (dart.library.js_interop) 'api_base_web.dart' as api_base;
+import 'api_base_stub.dart'
+    if (dart.library.js_interop) 'api_base_web.dart'
+    as api_base;
 
 class AppConfig {
   static const _rawApiBaseUrl = String.fromEnvironment(
@@ -57,6 +59,19 @@ class AppConfig {
   }
 
   static Uri resolveUri(String path) => Uri.parse('$apiBaseUrl$path');
+
+  static String resolveMediaUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty ||
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('assets/') ||
+        trimmed.startsWith('/assets/number_gestures/')) {
+      return trimmed;
+    }
+    final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return '$apiBaseUrl$path';
+  }
 
   static Uri resolveWebSocketUri(String path) {
     final base = apiBaseUrl;

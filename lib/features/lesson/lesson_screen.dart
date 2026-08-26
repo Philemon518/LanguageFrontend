@@ -19,6 +19,7 @@ class _LessonScreenState extends State<LessonScreen> {
   Map<String, dynamic>? response;
   bool checking = false;
   bool finished = false;
+  bool introDismissed = false;
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _LessonScreenState extends State<LessonScreen> {
       resizeToAvoidBottomInset: true,
       body: state.loading
           ? const Center(child: CircularProgressIndicator())
-          : lesson == null || step == null
+          : lesson == null
           ? Center(child: Text(state.error ?? 'Lesson not found'))
           : finished
           ? _CompletionView(
@@ -50,6 +51,14 @@ class _LessonScreenState extends State<LessonScreen> {
                 if (context.mounted) context.pop();
               },
             )
+          : !introDismissed && lesson.lessonIntro != null
+          ? _LessonIntroView(
+              lesson: lesson,
+              onClose: () => context.pop(),
+              onContinue: () => setState(() => introDismissed = true),
+            )
+          : step == null
+          ? Center(child: Text(state.error ?? 'Lesson has no exercises'))
           : SafeArea(
               child: Column(
                 children: [
@@ -95,7 +104,8 @@ class _LessonScreenState extends State<LessonScreen> {
 
   Future<void> _handleAction(AppState state) async {
     final step = state.currentStep;
-    if (step?.type == 'word_intro' && state.lastResult == null) {
+    if ((step?.type == 'word_intro' || step?.type == 'lesson_intro') &&
+        state.lastResult == null) {
       setState(() => checking = true);
       await state.submitCurrentStep({'selected_option_id': 'intro-ready'});
       state.nextStep();
@@ -123,6 +133,229 @@ class _LessonScreenState extends State<LessonScreen> {
       response = null;
       checking = false;
     });
+  }
+}
+
+class _LessonIntroView extends StatelessWidget {
+  const _LessonIntroView({
+    required this.lesson,
+    required this.onClose,
+    required this.onContinue,
+  });
+
+  final LessonDocument lesson;
+  final VoidCallback onClose;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final intro = lesson.lessonIntro!;
+    final title = _text(intro['title']) ?? lesson.title;
+    final subtitle =
+        _text(intro['subtitle']) ??
+        _text(intro['description']) ??
+        _text(intro['body']);
+    final image = _mediaSource(
+      intro['image'] ?? intro['image_url'] ?? intro['image_asset'],
+    );
+    final sections = intro['sections'] is List
+        ? intro['sections'] as List
+        : const <dynamic>[];
+    final objectives = intro['objectives'] is List
+        ? intro['objectives'] as List
+        : lesson.objectives;
+
+    return SafeArea(
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: onClose,
+              icon: const Icon(Icons.close_rounded, color: AppTheme.muted),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              key: const Key('lessonIntroScrollView'),
+              padding: const EdgeInsets.fromLTRB(24, 6, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.headlineLarge),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 17,
+                        height: 1.45,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                  if (image != null) ...[
+                    const SizedBox(height: 22),
+                    _LessonIntroImage(source: image),
+                  ],
+                  if (objectives.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const _IntroHeading('WHAT YOU’LL LEARN'),
+                    const SizedBox(height: 8),
+                    ...objectives.map(
+                      (objective) => _IntroBullet(text: objective.toString()),
+                    ),
+                  ],
+                  ...sections.expand(
+                    (raw) => [
+                      const SizedBox(height: 20),
+                      _IntroSection(data: raw),
+                    ],
+                  ),
+                  if (intro['tips'] is List) ...[
+                    const SizedBox(height: 20),
+                    const _IntroHeading('TIPS'),
+                    const SizedBox(height: 8),
+                    ...(intro['tips'] as List).map(
+                      (tip) => _IntroBullet(text: tip.toString()),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+            child: _LessonButton(
+              label: 'START LESSON',
+              color: AppTheme.green,
+              shadow: AppTheme.greenDark,
+              enabled: true,
+              onTap: onContinue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String? _text(dynamic value) =>
+      value is String && value.trim().isNotEmpty ? value.trim() : null;
+
+  static String? _mediaSource(dynamic value) {
+    if (value is String && value.isNotEmpty) return value;
+    if (value is Map) {
+      for (final key in const ['url', 'asset', 'asset_path', 'path']) {
+        final source = value[key];
+        if (source is String && source.isNotEmpty) return source;
+      }
+    }
+    return null;
+  }
+}
+
+class _IntroHeading extends StatelessWidget {
+  const _IntroHeading(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      color: AppTheme.blue,
+      fontWeight: FontWeight.w900,
+      letterSpacing: .8,
+      fontSize: 12,
+    ),
+  );
+}
+
+class _IntroBullet extends StatelessWidget {
+  const _IntroBullet({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 3),
+          child: Icon(
+            Icons.check_circle_rounded,
+            color: AppTheme.green,
+            size: 19,
+          ),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontWeight: FontWeight.w700, height: 1.35),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _IntroSection extends StatelessWidget {
+  const _IntroSection({required this.data});
+  final dynamic data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data is String) return _IntroBullet(text: data as String);
+    if (data is! Map) return const SizedBox.shrink();
+    final map = data as Map;
+    final heading =
+        map['title']?.toString() ??
+        map['heading']?.toString() ??
+        map['label']?.toString();
+    final body = map['body'] ?? map['text'] ?? map['description'];
+    final items = map['items'] is List ? map['items'] as List : const [];
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppTheme.border, width: 2),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (heading != null) _IntroHeading(heading.toUpperCase()),
+          if (heading != null && body != null) const SizedBox(height: 7),
+          if (body != null)
+            Text(
+              body.toString(),
+              style: const TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+            ),
+          if (items.isNotEmpty) ...[
+            const SizedBox(height: 9),
+            ...items.map((item) => _IntroBullet(text: item.toString())),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LessonIntroImage extends StatelessWidget {
+  const _LessonIntroImage({required this.source});
+  final String source;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = source.startsWith('/') ? source.substring(1) : source;
+    return SizedBox(
+      height: 210,
+      child: source.startsWith('http://') || source.startsWith('https://')
+          ? Image.network(source, fit: BoxFit.contain)
+          : Image.asset(normalized, fit: BoxFit.contain),
+    );
   }
 }
 
@@ -218,7 +451,7 @@ class _BottomTray extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final correct = result?.correct == true;
-    final isIntro = step.type == 'word_intro';
+    final isIntro = step.type == 'word_intro' || step.type == 'lesson_intro';
     final color = result == null
         ? AppTheme.green
         : correct

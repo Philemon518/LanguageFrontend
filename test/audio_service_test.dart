@@ -28,6 +28,12 @@ ExerciseStep _step({
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('manual playback alternates normal and half speed', () {
+    expect(AudioService.manualSpeedForTap(0), 1.0);
+    expect(AudioService.manualSpeedForTap(1), 0.5);
+    expect(AudioService.manualSpeedForTap(2), 1.0);
+  });
+
   test('ExerciseStep collects step and option audio urls', () {
     final step = _step(
       stepAudioUrl: 'https://example.com/word.wav',
@@ -37,14 +43,11 @@ void main() {
       ],
     );
 
-    expect(
-      step.collectAudioUrls(),
-      [
-        'https://example.com/word.wav',
-        'https://example.com/a.wav',
-        'https://example.com/b.wav',
-      ],
-    );
+    expect(step.collectAudioUrls(), [
+      'https://example.com/word.wav',
+      'https://example.com/a.wav',
+      'https://example.com/b.wav',
+    ]);
   });
 
   test('LessonDocument deduplicates audio urls across steps', () {
@@ -63,20 +66,14 @@ void main() {
       ],
     );
 
-    expect(
-      lesson.collectAudioUrls(),
-      [
-        'https://example.com/word.wav',
-        'https://example.com/other.wav',
-      ],
-    );
-    expect(
-      lesson.collectAudioUrlsForStep(1),
-      [
-        'https://example.com/word.wav',
-        'https://example.com/other.wav',
-      ],
-    );
+    expect(lesson.collectAudioUrls(), [
+      'https://example.com/word.wav',
+      'https://example.com/other.wav',
+    ]);
+    expect(lesson.collectAudioUrlsForStep(1), [
+      'https://example.com/word.wav',
+      'https://example.com/other.wav',
+    ]);
   });
 
   test('AudioService caches lesson audio in memory', () async {
