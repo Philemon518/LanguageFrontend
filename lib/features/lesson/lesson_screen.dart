@@ -54,11 +54,13 @@ class _LessonScreenState extends State<LessonScreen> {
                 if (context.mounted) context.pop();
               },
             )
-          : !introDismissed && lesson.lessonIntro != null
+          : !introDismissed &&
+              lesson.lessonIntro != null &&
+              state.currentStepIndex == 0
           ? _LessonIntroView(
               lesson: lesson,
               onClose: () => context.pop(),
-              onContinue: () => setState(() => introDismissed = true),
+              onContinue: () => _dismissIntro(state),
             )
           : step == null
           ? Center(child: Text(state.error ?? 'Lesson has no exercises'))
@@ -103,6 +105,15 @@ class _LessonScreenState extends State<LessonScreen> {
               ),
             ),
     );
+  }
+
+  Future<void> _dismissIntro(AppState state) async {
+    if (state.currentStep?.type == 'lesson_intro') {
+      await state.submitCurrentStep({'selected_option_id': 'intro-ready'});
+      state.nextStep();
+    }
+    if (!mounted) return;
+    setState(() => introDismissed = true);
   }
 
   Future<void> _handleAction(AppState state) async {

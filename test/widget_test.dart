@@ -581,6 +581,15 @@ class _FakeApiClient extends ApiClient {
   Future<LessonDocument> fetchLesson(String lessonId) async =>
       lessonDocument ?? (throw StateError('No fake lesson configured'));
 
+  @override
+  Future<AttemptResult> submitAttempt({
+    required String lessonId,
+    required String exerciseId,
+    required String skill,
+    required Map<String, dynamic> response,
+    String? idempotencyKey,
+  }) async => AttemptResult(correct: true, score: 1);
+
   AuthSession _session(String username) => AuthSession(
     accessToken: 'test-token',
     tokenType: 'bearer',
