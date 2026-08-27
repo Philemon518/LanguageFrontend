@@ -830,20 +830,22 @@ class _IntroItemCard extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                Text(
-                  jyutping,
-                  style: const TextStyle(
-                    color: AppTheme.blue,
-                    fontWeight: FontWeight.w900,
+                if (jyutping.isNotEmpty)
+                  Text(
+                    jyutping,
+                    style: const TextStyle(
+                      color: AppTheme.blue,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                Text(
-                  english,
-                  style: const TextStyle(
-                    color: AppTheme.muted,
-                    fontWeight: FontWeight.w700,
+                if (english.isNotEmpty && english != traditional)
+                  Text(
+                    english,
+                    style: const TextStyle(
+                      color: AppTheme.muted,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

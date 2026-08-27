@@ -136,7 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _label(String phase) => switch (phase) {
-    'sound' => 'Sound & tones',
+    'sound' || 'orientation' => 'Sound & tones',
+    'numbers' => 'Numbers',
+    'introductions' => 'Introductions',
     'components' => 'Characters',
     'vocabulary' => 'Vocabulary',
     'sentences' || 'grammar' => 'Sentences',
@@ -273,7 +275,9 @@ class _PhaseBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = AppTheme.phaseColor(phase);
     final title = switch (phase) {
-      'sound' => 'Hear the shape of Cantonese',
+      'sound' || 'orientation' => 'Hear the shape of Cantonese',
+      'numbers' => 'Count in spoken Cantonese',
+      'introductions' => 'Introduce yourself',
       'components' => 'Build characters from parts',
       'vocabulary' => 'Use words in real life',
       'sentences' || 'grammar' => 'Make meaning with sentences',

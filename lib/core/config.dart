@@ -107,7 +107,9 @@ class AppTheme {
   static const canvas = Color(0xFFFFFDF7);
 
   static Color phaseColor(String phase) => switch (phase) {
-    'sound' => blue,
+    'sound' || 'orientation' => blue,
+    'numbers' => green,
+    'introductions' => purple,
     'components' => purple,
     'vocabulary' => green,
     'sentences' || 'grammar' => orange,
@@ -115,7 +117,9 @@ class AppTheme {
   };
 
   static Color phaseShadow(String phase) => switch (phase) {
-    'sound' => blueDark,
+    'sound' || 'orientation' => blueDark,
+    'numbers' => greenDark,
+    'introductions' => purpleDark,
     'components' => purpleDark,
     'vocabulary' => greenDark,
     'sentences' || 'grammar' => orangeDark,

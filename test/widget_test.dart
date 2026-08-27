@@ -246,6 +246,56 @@ void main() {
     expect(find.text('si1'), findsOneWidget);
   });
 
+  testWidgets('intro card renders latin tiles without audio', (tester) async {
+    final step = ExerciseStep(
+      id: 'intro',
+      type: 'lesson_intro',
+      skill: 'listening',
+      prompt: '我 · 叫',
+      metadata: const {
+        'lesson_intro': {
+          'summary': 'Say who you are in spoken Cantonese.',
+          'learning_goals': ['Hear 我 and 叫'],
+          'new_items': [
+            {
+              'traditional': '我',
+              'jyutping': 'ngo5',
+              'english': 'I / me',
+              'audio': {'url': '/media/wo.wav'},
+            },
+            {
+              'traditional': 'Jordyn',
+              'jyutping': '',
+              'english': 'Jordyn',
+              'placeholder': true,
+            },
+          ],
+          'review_items': [],
+        },
+      },
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 600,
+            child: QuestionStage(
+              step: step,
+              onResponseChanged: (_) {},
+              onAssessSpeech: (_, _, _) async => null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('我'), findsOneWidget);
+    expect(find.text('ngo5'), findsOneWidget);
+    expect(find.text('Jordyn'), findsOneWidget);
+    expect(find.byIcon(Icons.volume_up_rounded), findsOneWidget);
+  });
+
   testWidgets('character typing preserves Chinese input', (tester) async {
     final step = ExerciseStep(
       id: 'character-1',
